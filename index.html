@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>iOS URL Scheme & Universal Link Tester — Deep Link Validator</title>
+<meta name="description" content="Test iOS custom URL schemes and universal links directly in your browser. Validate URL syntax, build query parameters visually, verify apple-app-site-association JSON, and browse a system URL scheme reference. Free." />
+<link rel="canonical" href="https://ios-url-scheme-tester.vercel.app/" />
+<meta property="og:title" content="iOS URL Scheme & Universal Link Tester" />
+<meta property="og:description" content="Build, validate, and test iOS deep links and universal links in your browser. Includes AASA validator and system URL scheme reference. Free." />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="iOS URL Scheme & Universal Link Tester" />
+<meta name="twitter:description" content="Test iOS URL schemes and universal links. AASA validator included. Free." />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"iOS URL Scheme & Universal Link Tester","url":"https://ios-url-scheme-tester.vercel.app/","description":"Test iOS custom URL schemes and universal links. Build URLs visually, validate apple-app-site-association JSON, and browse system URL schemes.","applicationCategory":"DeveloperApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+</script>
+<style>
+  :root{
+    --bg:#0b0c10;--panel:#15171f;--panel2:#1c1f2a;--ink:#eef1f7;--muted:#9aa3b5;
+    --line:#262a36;--accent:#5b8cff;--ok:#34d399;--warn:#fbbf24;--err:#f87171;
+    --radius:14px;--mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink);background:radial-gradient(1100px 600px at 50% -15%,#1a0e30 0,transparent 55%),var(--bg)}
+  header{padding:42px 22px 10px;max-width:860px;margin:0 auto}
+  .badge{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);
+    border:1px solid var(--line);padding:5px 11px;border-radius:999px;background:var(--panel)}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 10px var(--ok)}
+  h1{font-size:30px;margin:16px 0 6px;letter-spacing:-.4px}
+  h1 span{color:var(--accent)}
+  .sub{color:var(--muted);max-width:640px}
+  main{max-width:860px;margin:18px auto 60px;padding:0 22px}
+
+  /* Tabs */
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:20px;overflow-x:auto}
+  .tab-btn{cursor:pointer;border:none;background:none;color:var(--muted);padding:10px 18px;
+    font:inherit;font-size:13.5px;font-weight:600;border-bottom:2px solid transparent;white-space:nowrap;margin-bottom:-1px}
+  .tab-btn:hover{color:var(--ink)}
+  .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+  /* Cards */
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px;margin-bottom:16px}
+  h2{font-size:14px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:0 0 14px}
+  .field-block{margin-bottom:14px}
+  .field-label{display:block;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
+  .field-hint{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.4}
+  input[type=text],textarea,select{background:var(--panel2);border:1px solid var(--line);color:var(--ink);
+    border-radius:8px;padding:8px 12px;font:inherit;font-size:14px;outline:none;width:100%}
+  input[type=text]:focus,textarea:focus{border-color:var(--accent)}
+  textarea{resize:vertical;font-family:var(--mono);font-size:13px}
+
+  /* Scheme builder */
+  .scheme-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .scheme-row input{flex:1;min-width:100px;font-family:var(--mono)}
+  .scheme-row .sep{color:var(--muted);font-family:var(--mono);font-size:15px;flex:none}
+  .preview-block{background:var(--panel2);border:1px solid var(--line);border-radius:9px;
+    padding:12px 16px;font-family:var(--mono);font-size:13.5px;color:var(--accent);word-break:break-all;margin:12px 0 6px}
+  .valid-msg{font-size:12.5px;color:var(--ok);margin-top:4px}
+  .invalid-msg{font-size:12.5px;color:var(--warn);margin-top:4px}
+
+  /* Param rows */
+  .param-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+  .param-row input{background:var(--panel2);border:1px solid var(--line);color:var(--ink);
+    border-radius:8px;padding:7px 10px;font:inherit;font-size:13.5px;outline:none;flex:1;min-width:80px}
+  .param-row input:focus{border-color:var(--accent)}
+  .remove-param-btn{cursor:pointer;border:1px solid var(--line);border-radius:7px;padding:5px 10px;
+    font:12px/1 inherit;background:none;color:var(--muted);flex:none}
+  .remove-param-btn:hover{border-color:var(--err);color:var(--err)}
+  .add-param-btn{cursor:pointer;border:1px dashed var(--line);border-radius:8px;padding:6px 14px;
+    font:13px/1 inherit;font-weight:600;background:none;color:var(--muted);margin-top:4px}
+  .add-param-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+  /* Action buttons */
+  .action-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  .btn{cursor:pointer;border:1px solid var(--line);border-radius:8px;padding:9px 18px;
+    font:13px/1 inherit;font-weight:600;background:var(--panel);color:var(--ink)}
+  .btn:hover{border-color:var(--accent);color:var(--accent)}
+  .btn.primary{background:linear-gradient(180deg,#6b97ff,#4a78ff);border:0;color:#fff}
+  .btn.primary:hover{opacity:.92}
+
+  /* System schemes table */
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th{text-align:left;font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding:6px 10px;border-bottom:1px solid var(--line)}
+  td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  code{font-family:var(--mono);font-size:12.5px}
+  .tbl-btn{cursor:pointer;border:1px solid var(--line);border-radius:6px;padding:3px 10px;
+    font:12px/1 inherit;font-weight:600;background:none;color:var(--muted);margin-right:4px}
+  .tbl-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .tbl-btn.open:hover{border-color:var(--ok);color:var(--ok)}
+
+  /* History */
+  .history-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .history-row:last-child{border-bottom:none}
+  .history-url{font-family:var(--mono);font-size:12.5px;color:var(--accent);word-break:break-all;flex:1}
+  .history-meta{font-size:12px;color:var(--muted);white-space:nowrap}
+  .history-copy,.history-open{cursor:pointer;border:1px solid var(--line);border-radius:6px;padding:2px 9px;
+    font:11.5px/1 inherit;font-weight:600;background:none;color:var(--muted);white-space:nowrap;flex:none}
+  .history-copy:hover{border-color:var(--accent);color:var(--accent)}
+  .history-open:hover{border-color:var(--ok);color:var(--ok)}
+
+  /* AASA output */
+  .aasa-output{background:var(--panel2);border:1px solid var(--line);border-radius:9px;
+    padding:14px 16px;font-family:var(--mono);font-size:13px;white-space:pre-wrap;margin-top:12px;line-height:1.5}
+  .aasa-output.ok{border-color:rgba(52,211,153,.4);color:var(--ok)}
+  .aasa-output.warn{border-color:rgba(251,191,36,.4);color:var(--warn)}
+  .aasa-output.error{border-color:rgba(248,113,113,.4);color:var(--err)}
+
+  .tip-box{background:linear-gradient(135deg,#1a2035 0%,#141825 100%);border:1px solid #2a304a;
+    border-radius:14px;padding:20px 26px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-top:24px}
+  footer{max-width:860px;margin:0 auto;padding:0 22px 50px;color:#6b7385;font-size:12.5px}
+  footer a{color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <span class="badge"><span class="dot"></span>Custom schemes · Universal Links · AASA validator · browser-only</span>
+  <h1>iOS URL Scheme &amp; <span>Universal Link Tester</span></h1>
+  <p class="sub">Build deep links visually, fire them in one click, validate your apple-app-site-association file, and look up iOS system URL schemes — all without leaving the browser.</p>
+</header>
+<main>
+
+<div class="tabs">
+  <button class="tab-btn" id="tab_custom" onclick="switchTab('custom')">Custom URL Scheme</button>
+  <button class="tab-btn" id="tab_universal" onclick="switchTab('universal')">Universal Links</button>
+  <button class="tab-btn" id="tab_aasa" onclick="switchTab('aasa')">AASA Validator</button>
+  <button class="tab-btn" id="tab_system" onclick="switchTab('system')">System Schemes</button>
+  <button class="tab-btn" id="tab_history" onclick="switchTab('history')">History</button>
+</div>
+
+<!-- Custom URL Scheme -->
+<div id="content_custom" class="tab-content">
+  <div class="card">
+    <h2>Build a Custom URL Scheme</h2>
+
+    <div class="field-block">
+      <label class="field-label">Scheme &amp; Host / Path</label>
+      <div class="scheme-row">
+        <input id="schemeInput" type="text" placeholder="myapp" spellcheck="false" style="font-family:var(--mono);max-width:160px" />
+        <span class="sep">://</span>
+        <input id="hostInput" type="text" placeholder="action/detail?id=123" spellcheck="false" />
+      </div>
+      <p class="field-hint">Enter the scheme name (without "://") on the left. Add the host, path, and static query params on the right, or use the param builder below.</p>
+    </div>
+
+    <div class="field-block">
+      <label class="field-label">Query Parameters</label>
+      <div id="paramsContainer"></div>
+      <button class="add-param-btn" onclick="addParam()">+ Add Parameter</button>
+    </div>
+
+    <div class="preview-block" id="customPreview">(enter a scheme above)</div>
+    <div id="schemeValid"></div>
+
+    <div class="action-row">
+      <button class="btn primary" onclick="openCustomURL()">Open URL →</button>
+      <button class="btn" id="copyPreviewBtn" onclick="copyPreview('copyPreviewBtn')">Copy URL</button>
+    </div>
+    <p style="font-size:12.5px;color:var(--muted);margin:10px 0 0">Opening the URL fires it at your device/simulator if testing from Safari on device, or tests the scheme format in other browsers.</p>
+  </div>
+</div>
+
+<!-- Universal Links -->
+<div id="content_universal" class="tab-content" style="display:none">
+  <div class="card">
+    <h2>Test a Universal Link</h2>
+    <div class="field-block">
+      <label class="field-label">Universal Link URL</label>
+      <input id="universalLinkInput" type="text" placeholder="https://yourdomain.com/products/42" spellcheck="false" />
+      <p class="field-hint">Universal links must be HTTPS. iOS intercepts them when the AASA file at /.well-known/apple-app-site-association matches the URL path.</p>
+    </div>
+
+    <div class="action-row">
+      <button class="btn primary" onclick="openUniversalLink()">Open Link →</button>
+      <button class="btn" id="copyUniversalBtn" onclick="copyUniversal()">Copy URL</button>
+    </div>
+
+    <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--line)">
+      <h2>Universal Link Checklist</h2>
+      <ul style="color:var(--muted);font-size:13.5px;line-height:2;margin:0;padding:0 0 0 18px">
+        <li>Domain must be HTTPS with a valid TLS certificate</li>
+        <li><code>apple-app-site-association</code> hosted at <code>https://yourdomain.com/.well-known/apple-app-site-association</code></li>
+        <li>App's <code>Associated Domains</code> entitlement includes <code>applinks:yourdomain.com</code></li>
+        <li>AASA served with <code>Content-Type: application/json</code> (no redirect, no auth)</li>
+        <li>iOS caches AASA — changes take effect after reinstalling the app or waiting up to 24 hours</li>
+        <li>Use "Smart App Banner" (<code>&lt;meta name="apple-itunes-app"&gt;</code>) as fallback for browsers</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- AASA Validator -->
+<div id="content_aasa" class="tab-content" style="display:none">
+  <div class="card">
+    <h2>apple-app-site-association Validator</h2>
+    <p style="font-size:13.5px;color:var(--muted);margin:0 0 14px">Paste the contents of your AASA file. This checks the structure — it does not make any network requests.</p>
+    <div class="field-block">
+      <label class="field-label">AASA JSON</label>
+      <textarea id="aasaInput" rows="12" placeholder='{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["TEAMID.com.yourapp"],
+        "components": [
+          { "/": "/products/*" },
+          { "/": "/users/*/profile" }
+        ]
+      }
+    ]
+  }
+}'></textarea>
+    </div>
+    <button class="btn primary" onclick="validateAASA()">Validate Structure →</button>
+    <div id="aasaOutput" class="aasa-output" style="display:none"></div>
+    <script>
+      // Show output area after button click
+      const origValidate = validateAASA;
+      document.addEventListener("DOMContentLoaded", () => {
+        const btn = document.querySelector("[onclick='validateAASA()']");
+        if (btn) btn.addEventListener("click", () => {
+          document.getElementById("aasaOutput").style.display = "block";
+        });
+      });
+    </script>
+  </div>
+</div>
+
+<!-- System Schemes -->
+<div id="content_system" class="tab-content" style="display:none">
+  <div class="card">
+    <h2>iOS System URL Scheme Reference</h2>
+    <p style="font-size:13.5px;color:var(--muted);margin:0 0 14px">Common system URL schemes. Behavior may vary by iOS version. <b>Important:</b> Add any scheme you call via <code>canOpenURL</code> to your <code>Info.plist</code> LSApplicationQueriesSchemes array.</p>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Scheme</th>
+            <th>Purpose</th>
+            <th>Example URL</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="systemSchemesTable"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- History -->
+<div id="content_history" class="tab-content" style="display:none">
+  <div class="card">
+    <div style="display:flex;align-items:center;margin-bottom:14px">
+      <h2 style="margin:0;flex:1">Recent Links</h2>
+      <button class="btn" onclick="clearHistory()" style="font-size:12px;padding:5px 12px">Clear</button>
+    </div>
+    <div id="historyList"></div>
+  </div>
+</div>
+
+<div class="tip-box">
+  <div>
+    <div style="font-weight:700;font-size:16px;margin-bottom:6px">✦ Found this useful? Support the project</div>
+    <div style="color:#9aa3b5;font-size:13.5px;max-width:460px">Orb Intelligence is a one-person indie studio building free tools for iOS developers.</div>
+  </div>
+  <a href="https://buy.stripe.com/4gM28t2xG3SngLvbiY6wE01" target="_blank" rel="noopener"
+    style="display:inline-block;background:linear-gradient(180deg,#6b97ff,#4a78ff);color:#fff;font-weight:650;font-size:14.5px;padding:12px 26px;border-radius:10px;text-decoration:none;white-space:nowrap;flex:none">
+    Support · $9.90
+  </a>
+</div>
+
+</main>
+<footer>
+  Built by <b>Orb Intelligence</b>. All link testing happens in your browser — nothing is sent to any server.
+  Opening a custom URL scheme from a desktop browser won't trigger an app; test from Safari on a real device or simulator.
+  <br><br>
+  More free tools:
+  <a href="https://appstore-metadata-auditor.vercel.app/" rel="noopener">Metadata Auditor</a> ·
+  <a href="https://ios-privacy-policy-generator.vercel.app/" rel="noopener">Privacy Policy Generator</a> ·
+  <a href="https://ios-app-review-generator.vercel.app/" rel="noopener">Review Responder</a> ·
+  <a href="https://appstore-screenshot-generator-theta.vercel.app/" rel="noopener">Screenshot Generator</a> ·
+  <a href="https://appstore-keyword-optimizer.vercel.app/" rel="noopener">Keyword Optimizer</a> ·
+  <a href="https://appstore-release-notes-generator.vercel.app/" rel="noopener">Release Notes Generator</a> ·
+  <a href="https://ios-app-icon-resizer.vercel.app/" rel="noopener">Icon Resizer</a> ·
+  <a href="https://appstore-submission-checklist.vercel.app/" rel="noopener">Submission Checklist</a> ·
+  <a href="https://ios-privacy-manifest-generator.vercel.app/" rel="noopener">Privacy Manifest Generator</a> ·
+  <a href="https://ios-entitlements-generator.vercel.app/" rel="noopener">Entitlements Generator</a> ·
+  <a href="https://testflight-feedback-organizer.vercel.app/" rel="noopener">Beta Feedback Organizer</a> ·
+  <a href="https://appstore-localization-helper.vercel.app/" rel="noopener">Localization Helper</a> ·
+  <a href="https://appstore-age-rating-calculator.vercel.app/" rel="noopener">Age Rating Calculator</a> ·
+  <a href="https://ios-iap-configurator.vercel.app/" rel="noopener">IAP Configurator</a> ·
+  <a href="https://ios-push-payload-builder.vercel.app/" rel="noopener">Push Payload Builder</a> ·
+  <a href="https://xcode-build-phase-generator.vercel.app/" rel="noopener">Build Phase Generator</a> ·
+  <a href="https://ios-url-scheme-tester.vercel.app/" rel="noopener">URL Scheme Tester</a>
+</footer>
+<script src="tester.js"></script>
+</body>
+</html>
